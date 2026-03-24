@@ -36,25 +36,6 @@ export function Layout({
           <div className="flex justify-between items-center px-4 py-3 bg-slate-700 text-white">
             <h1 className="text-lg font-semibold tracking-wide">SUPORTE FOLHA</h1>
             <div className="flex items-center gap-4">
-              {setViewMode && (
-                <button
-                  onClick={() => setViewMode(viewMode === 'desktop' ? 'mobile' : 'desktop')}
-                  className="flex items-center gap-2 bg-slate-600 hover:bg-slate-500 px-3 py-1 rounded-none transition-colors text-xs font-bold"
-                  title={viewMode === 'desktop' ? 'Mudar para Mobile' : 'Mudar para Desktop'}
-                >
-                  {viewMode === 'desktop' ? (
-                    <>
-                      <Smartphone size={16} />
-                      <span className="hidden sm:inline">MOBILE</span>
-                    </>
-                  ) : (
-                    <>
-                      <Monitor size={16} />
-                      <span className="hidden sm:inline">DESKTOP</span>
-                    </>
-                  )}
-                </button>
-              )}
               <span className="text-sm font-medium tracking-widest opacity-80 border-l border-slate-600 pl-4 hidden sm:inline">
                 AMERICAN AIRLINE
               </span>

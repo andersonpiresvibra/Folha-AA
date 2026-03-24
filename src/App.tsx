@@ -26,25 +26,13 @@ export default function App() {
 
   return (
     <div className={`min-h-screen bg-slate-100 ${viewMode === 'mobile' ? 'force-landscape-mobile' : ''}`}>
-      {step === 1 && (
-        <Dashboard 
-          state={state} 
-          updateState={updateState} 
-          onGenerate={nextStep} 
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-        />
-      )}
-      {step === 2 && (
-        <Step7Folha 
-          state={state} 
-          updateState={updateState} 
-          onNext={reset} 
-          onBack={prevStep} 
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-        />
-      )}
+      <Dashboard 
+        state={state} 
+        updateState={updateState} 
+        onGenerate={() => {}} 
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+      />
     </div>
   );
 }
