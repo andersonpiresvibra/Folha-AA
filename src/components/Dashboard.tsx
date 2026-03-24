@@ -12,7 +12,7 @@ interface Props {
   setViewMode: (mode: 'desktop' | 'mobile') => void;
 }
 
-const NumericInput = ({ label, value, onChange, placeholder = "0", isDecimal = false, isDensity = false, shouldRoundTo100 = false, onClear }: any) => {
+const NumericInput = ({ label, value, onChange, placeholder = "0", isDecimal = false, isDensity = false, shouldRoundTo100 = false, onClear, error }: any) => {
   const [localValue, setLocalValue] = useState(() => {
     if (value === '') return '';
     if (isDensity) return String(value).replace('.', ',');
@@ -102,9 +102,9 @@ const NumericInput = ({ label, value, onChange, placeholder = "0", isDecimal = f
   const isFilled = value !== '';
 
   return (
-    <div>
+    <div className="flex flex-col">
       <div className="flex justify-between items-center mb-1 md:mb-2">
-        <label className="block text-[10px] md:text-xs font-bold text-slate-500 uppercase">{label}</label>
+        <label className={`block text-[10px] md:text-xs font-bold uppercase ${error ? 'text-red-600' : 'text-slate-500'}`}>{label}</label>
         {isFilled && onClear && (
           <button 
             onClick={onClear}
@@ -123,18 +123,30 @@ const NumericInput = ({ label, value, onChange, placeholder = "0", isDecimal = f
           onChange={handleChange}
           onBlur={handleBlur}
           className={`w-full p-2 md:p-3 border-2 rounded-none focus:outline-none text-base md:text-xl font-mono text-right font-bold transition-colors pr-8 md:pr-10 ${
-            isFilled 
-              ? 'border-emerald-500 bg-emerald-100 text-emerald-900 focus:border-emerald-600' 
-              : 'border-slate-200 focus:border-blue-500'
+            error
+              ? 'border-red-500 bg-red-50 text-red-900 focus:border-red-600'
+              : isFilled 
+                ? 'border-emerald-500 bg-emerald-100 text-emerald-900 focus:border-emerald-600' 
+                : 'border-slate-200 focus:border-blue-500'
           }`}
           placeholder={placeholder}
         />
-        {isFilled && (
+        {isFilled && !error && (
           <div className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 pointer-events-none">
             <CheckCircle2 size={16} className="text-emerald-600 md:w-5 md:h-5" />
           </div>
         )}
+        {error && (
+          <div className="absolute right-2 md:right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+            <AlertCircle size={16} className="text-red-600 md:w-5 md:h-5" />
+          </div>
+        )}
       </div>
+      {error && (
+        <span className="text-[10px] text-red-600 font-bold mt-1 uppercase tracking-tighter">
+          {error}
+        </span>
+      )}
     </div>
   );
 };
@@ -143,6 +155,7 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState<'data' | 'sheet'>('data');
+  const [showValidation, setShowValidation] = useState(false);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => 
@@ -294,27 +307,29 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
     >
       <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full">
         {/* TABS */}
-        <div className="flex border-b border-slate-200 bg-white sticky top-0 z-10">
+        <div className="flex bg-slate-100 sticky top-0 z-10 p-2 gap-2">
           <button
             onClick={() => setActiveTab('data')}
-            className={`flex-1 py-4 text-sm font-bold uppercase tracking-widest transition-all border-b-4 ${
+            className={`flex-1 py-3 text-xs md:text-sm font-bold uppercase tracking-widest transition-all ${
               activeTab === 'data' 
-                ? 'border-blue-600 text-blue-600 bg-blue-50/30' 
-                : 'border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                ? 'bg-blue-600 text-white' 
+                : 'bg-white text-slate-400 hover:bg-slate-50 hover:text-slate-600'
             }`}
           >
             Dados do Abastecimento
           </button>
-          <button
-            onClick={() => setActiveTab('sheet')}
-            className={`flex-1 py-4 text-sm font-bold uppercase tracking-widest transition-all border-b-4 ${
-              activeTab === 'sheet' 
-                ? 'border-blue-600 text-blue-600 bg-blue-50/30' 
-                : 'border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-50'
-            }`}
-          >
-            Visualização da Folha
-          </button>
+          {viewMode !== 'mobile' && (
+            <button
+              onClick={() => setActiveTab('sheet')}
+              className={`flex-1 py-3 text-xs md:text-sm font-bold uppercase tracking-widest transition-all ${
+                activeTab === 'sheet' 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white text-slate-400 hover:bg-slate-50 hover:text-slate-600'
+              }`}
+            >
+              Visualização da Folha
+            </button>
+          )}
         </div>
 
         <div className="p-4 md:p-8 space-y-6">
@@ -340,6 +355,13 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                   <span className="hidden md:inline">DADOS DO ABASTECIMENTO</span>
                   <span className="md:hidden">DADOS</span>
                 </h2>
+                <button
+                  onClick={handleFillTest}
+                  className="py-2 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] md:text-xs uppercase tracking-widest transition-colors flex items-center gap-2"
+                >
+                  <Calculator size={14} />
+                  Carregar Exemplo
+                </button>
               </div>
 
               {/* REQUERIDO */}
@@ -352,28 +374,31 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                   summary={reqTotal > 0 ? reqTotal.toLocaleString('pt-BR') : null} 
                 />
                 
-                {expandedSections.includes('required') && (
+                {expandedSections.includes('required') || showValidation ? (
                   <div className="p-4 border-t border-slate-100 grid grid-cols-3 gap-2 md:gap-4">
                     <NumericInput 
                       label={<><span className="hidden sm:inline">Asa Esquerda</span><span className="sm:hidden">L</span></>}
                       value={state.distributionLeft} 
                       onChange={(val: any) => updateState({ distributionLeft: val })} 
                       onClear={() => updateState({ distributionLeft: '' })}
+                      error={showValidation && state.distributionLeft === '' ? 'Obrigatório' : null}
                     />
                     <NumericInput 
                       label={<><span className="hidden sm:inline">Tanque Central</span><span className="sm:hidden">C</span></>}
                       value={state.distributionCenter} 
                       onChange={(val: any) => updateState({ distributionCenter: val })} 
                       onClear={() => updateState({ distributionCenter: '' })}
+                      error={showValidation && state.distributionCenter === '' ? 'Obrigatório' : null}
                     />
                     <NumericInput 
                       label={<><span className="hidden sm:inline">Asa Direita</span><span className="sm:hidden">R</span></>}
                       value={state.distributionRight} 
                       onChange={(val: any) => updateState({ distributionRight: val })} 
                       onClear={() => updateState({ distributionRight: '' })}
+                      error={showValidation && state.distributionRight === '' ? 'Obrigatório' : null}
                     />
                   </div>
-                )}
+                ) : null}
               </section>
 
               {/* REMANESCENTE */}
@@ -386,7 +411,7 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                   summary={remTotal > 0 ? remTotal.toLocaleString('pt-BR') : null} 
                 />
                 
-                {expandedSections.includes('rem') && (
+                {expandedSections.includes('rem') || showValidation ? (
                   <div className="p-4 border-t border-slate-100 grid grid-cols-3 gap-2 md:gap-4">
                     <NumericInput 
                       label={<><span className="hidden sm:inline">Asa Esquerda</span><span className="sm:hidden">L</span></>}
@@ -394,6 +419,7 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                       onChange={(val: any) => updateState({ remLeft: val })} 
                       onClear={() => updateState({ remLeft: '' })}
                       shouldRoundTo100
+                      error={showValidation && state.remLeft === '' ? 'Obrigatório' : null}
                     />
                     <NumericInput 
                       label={<><span className="hidden sm:inline">Tanque Central</span><span className="sm:hidden">C</span></>}
@@ -401,6 +427,7 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                       onChange={(val: any) => updateState({ remCenter: val })} 
                       onClear={() => updateState({ remCenter: '' })}
                       shouldRoundTo100
+                      error={showValidation && state.remCenter === '' ? 'Obrigatório' : null}
                     />
                     <NumericInput 
                       label={<><span className="hidden sm:inline">Asa Direita</span><span className="sm:hidden">R</span></>}
@@ -408,9 +435,10 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                       onChange={(val: any) => updateState({ remRight: val })} 
                       onClear={() => updateState({ remRight: '' })}
                       shouldRoundTo100
+                      error={showValidation && state.remRight === '' ? 'Obrigatório' : null}
                     />
                   </div>
-                )}
+                ) : null}
               </section>
 
               {/* ABASTECIDO */}
@@ -423,7 +451,7 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                   summary={currentTotal > 0 ? currentTotal.toLocaleString('pt-BR') : null} 
                 />
                 
-                {expandedSections.includes('current') && (
+                {expandedSections.includes('current') || showValidation ? (
                   <div className="p-4 border-t border-slate-100 grid grid-cols-3 gap-2 md:gap-4">
                     <NumericInput 
                       label={<><span className="hidden sm:inline">Asa Esquerda</span><span className="sm:hidden">L</span></>}
@@ -431,6 +459,7 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                       onChange={(val: any) => updateState({ currentLeft: val })} 
                       onClear={() => updateState({ currentLeft: '' })}
                       shouldRoundTo100
+                      error={showValidation && state.currentLeft === '' ? 'Obrigatório' : null}
                     />
                     <NumericInput 
                       label={<><span className="hidden sm:inline">Tanque Central</span><span className="sm:hidden">C</span></>}
@@ -438,6 +467,7 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                       onChange={(val: any) => updateState({ currentCenter: val })} 
                       onClear={() => updateState({ currentCenter: '' })}
                       shouldRoundTo100
+                      error={showValidation && state.currentCenter === '' ? 'Obrigatório' : null}
                     />
                     <NumericInput 
                       label={<><span className="hidden sm:inline">Asa Direita</span><span className="sm:hidden">R</span></>}
@@ -445,9 +475,10 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                       onChange={(val: any) => updateState({ currentRight: val })} 
                       onClear={() => updateState({ currentRight: '' })}
                       shouldRoundTo100
+                      error={showValidation && state.currentRight === '' ? 'Obrigatório' : null}
                     />
                   </div>
-                )}
+                ) : null}
               </section>
 
               {/* DENSIDADE - Compacta */}
@@ -460,7 +491,7 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                   summary={state.density !== '' ? String(state.density).replace('.', ',') : null} 
                 />
                 
-                {expandedSections.includes('density') && (
+                {expandedSections.includes('density') || showValidation ? (
                   <div className="p-4 border-t border-slate-100">
                     <div className="max-w-[200px]">
                       <NumericInput 
@@ -470,10 +501,11 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                         placeholder="0,00"
                         onChange={(val: any) => updateState({ density: val })} 
                         onClear={() => updateState({ density: '' })}
+                        error={showValidation && state.density === '' ? 'Obrigatório' : null}
                       />
                     </div>
                   </div>
-                )}
+                ) : null}
               </section>
 
               {/* GALÕES DO PRÉ */}
@@ -486,7 +518,7 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                   summary={Number(meterTotal) > 0 ? Number(meterTotal).toLocaleString('pt-BR') : null} 
                 />
                 
-                {expandedSections.includes('meters') && (
+                {expandedSections.includes('meters') || showValidation ? (
                   <div className="p-4 border-t border-slate-100 space-y-4">
                     {(state.meters || []).map((meter, index) => (
                       <NumericInput 
@@ -500,6 +532,7 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                           newMeters.splice(index, 1);
                           updateState({ meters: newMeters });
                         }}
+                        error={showValidation && meter === '' ? 'Obrigatório' : null}
                       />
                     ))}
                     <button
@@ -512,27 +545,10 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                       Adicionar Galão
                     </button>
                   </div>
-                )}
+                ) : null}
               </section>
 
               <div className="pt-4 pb-8 space-y-4">
-                {!isAnyFieldFilled && (
-                  <div className="grid grid-cols-2 gap-3 animate-in fade-in zoom-in-95 duration-300">
-                    <button
-                      onClick={handleFillTest}
-                      className="py-2 px-4 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs uppercase tracking-widest transition-colors"
-                    >
-                      Simular OK
-                    </button>
-                    <button
-                      onClick={handleFillMaxTolerance}
-                      className="py-2 px-4 bg-red-100 hover:bg-red-200 text-red-700 font-bold text-xs uppercase tracking-widest transition-colors"
-                    >
-                      Simular Tolerância Máxima
-                    </button>
-                  </div>
-                )}
-                
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="flex-1 relative">
                     {showClearConfirm ? (
@@ -562,7 +578,14 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                   </div>
                   
                   <button
-                    onClick={() => setActiveTab('sheet')}
+                    onClick={() => {
+                      if (!allFieldsFilled) {
+                        setShowValidation(true);
+                        // Scroll to first error
+                        return;
+                      }
+                      setActiveTab('sheet');
+                    }}
                     className="flex-1 bg-blue-600 text-white font-bold py-4 text-sm uppercase tracking-widest hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                   >
                     <FileText size={18} />
