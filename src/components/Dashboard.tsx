@@ -450,53 +450,67 @@ export function Dashboard({ state, updateState, onGenerate, viewMode, setViewMod
                 )}
               </section>
 
-              {/* GALÕES DO PRÉ E DENSIDADE */}
-              <section className={`bg-white rounded-none shadow-sm border overflow-hidden transition-all ${isMeterOk && isDensityOk ? 'border-emerald-300' : 'border-slate-200'}`}>
+              {/* DENSIDADE - Compacta */}
+              <section className={`bg-white rounded-none shadow-sm border overflow-hidden transition-all ${isDensityOk ? 'border-emerald-300' : 'border-slate-200'}`}>
                 <SectionHeader 
-                  title="GALÕES DO PRÉ E DENSIDADE" 
-                  icon={Calculator} 
-                  isOk={isMeterOk && isDensityOk} 
-                  sectionId="pre-density" 
-                  summary={Number(meterTotal) > 0 ? Number(meterTotal).toLocaleString('pt-BR') : null}
+                  title="DENSIDADE" 
+                  icon={Weight} 
+                  isOk={isDensityOk} 
+                  sectionId="density" 
+                  summary={state.density !== '' ? String(state.density).replace('.', ',') : null} 
                 />
                 
-                {expandedSections.includes('pre-density') && (
-                  <div className="p-4 border-t border-slate-100 space-y-6">
-                    <NumericInput 
-                      label="Densidade (LBS/GAL)" 
-                      value={state.density} 
-                      isDensity={true}
-                      placeholder="0,00"
-                      onChange={(val: any) => updateState({ density: val })} 
-                      onClear={() => updateState({ density: '' })}
-                    />
-                    
-                    <div className="space-y-4">
-                      <label className="block text-[10px] md:text-xs font-bold text-slate-500 uppercase">Galões do Pré</label>
-                      {(state.meters || []).map((meter, index) => (
-                        <NumericInput 
-                          key={index}
-                          label={`Galão ${index + 1}`} 
-                          value={meter} 
-                          isDecimal={true}
-                          onChange={(val: any) => handleMeterChange(index, val)} 
-                          onClear={() => {
-                            const newMeters = [...(state.meters || [])];
-                            newMeters.splice(index, 1);
-                            updateState({ meters: newMeters });
-                          }}
-                        />
-                      ))}
-                      <button
-                        onClick={handleAddMeter}
-                        className="w-full py-3 border-2 border-dashed border-slate-300 rounded-none text-slate-500 font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-slate-400 transition-colors"
-                      >
-                        <div className="w-6 h-6 rounded-none bg-slate-200 flex items-center justify-center">
-                          <span className="text-lg leading-none mb-0.5">+</span>
-                        </div>
-                        Adicionar Galão
-                      </button>
+                {expandedSections.includes('density') && (
+                  <div className="p-4 border-t border-slate-100">
+                    <div className="max-w-[200px]">
+                      <NumericInput 
+                        label="LBS/GAL" 
+                        value={state.density} 
+                        isDensity={true}
+                        placeholder="0,00"
+                        onChange={(val: any) => updateState({ density: val })} 
+                        onClear={() => updateState({ density: '' })}
+                      />
                     </div>
+                  </div>
+                )}
+              </section>
+
+              {/* GALÕES DO PRÉ */}
+              <section className={`bg-white rounded-none shadow-sm border overflow-hidden transition-all ${isMeterOk ? 'border-emerald-300' : 'border-slate-200'}`}>
+                <SectionHeader 
+                  title="GALÕES DO PRÉ" 
+                  icon={Calculator} 
+                  isOk={isMeterOk} 
+                  sectionId="meters" 
+                  summary={Number(meterTotal) > 0 ? Number(meterTotal).toLocaleString('pt-BR') : null} 
+                />
+                
+                {expandedSections.includes('meters') && (
+                  <div className="p-4 border-t border-slate-100 space-y-4">
+                    {(state.meters || []).map((meter, index) => (
+                      <NumericInput 
+                        key={index}
+                        label={`Galão ${index + 1}`} 
+                        value={meter} 
+                        isDecimal={true}
+                        onChange={(val: any) => handleMeterChange(index, val)} 
+                        onClear={() => {
+                          const newMeters = [...(state.meters || [])];
+                          newMeters.splice(index, 1);
+                          updateState({ meters: newMeters });
+                        }}
+                      />
+                    ))}
+                    <button
+                      onClick={handleAddMeter}
+                      className="w-full py-3 border-2 border-dashed border-slate-300 rounded-none text-slate-500 font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-slate-400 transition-colors"
+                    >
+                      <div className="w-6 h-6 rounded-none bg-slate-200 flex items-center justify-center">
+                        <span className="text-lg leading-none mb-0.5">+</span>
+                      </div>
+                      Adicionar Galão
+                    </button>
                   </div>
                 )}
               </section>
